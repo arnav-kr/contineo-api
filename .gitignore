@@ -1,0 +1,25 @@
+# Environment variables
+.env
+.env.*
+
+# Binaries & build artifacts
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+server
+bin/
+
+# Test dumps
+test/dumps/*.html
+test/dumps/*.txt
+*_dump.html
+
+# IDE & OS
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db

@@ -1,0 +1,324 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Contineo API",
+    "description": "API for accessing Contineo student portal data (dashboard, attendance, CIE marks, exam history).\n\nAll endpoints require `usn` and `dob` query parameters. `/api/attendance` and `/api/cie` additionally require `course`.\n\nErrors are returned as JSON: `{ \"error\": \"message\" }`.",
+    "version": "1.0.0",
+    "contact": {
+      "url": "https://github.com/arnav-kr/contineo"
+    }
+  },
+  "servers": [
+    { "url": "/", "description": "Current server" }
+  ],
+  "components": {
+    "parameters": {
+      "usn": {
+        "name": "usn",
+        "in": "query",
+        "required": true,
+        "description": "Student USN",
+        "schema": { "type": "string", "example": "1XX00XX000" }
+      },
+      "dob": {
+        "name": "dob",
+        "in": "query",
+        "required": true,
+        "description": "Date of birth in `YYYY-MM-DD` format",
+        "schema": { "type": "string", "format": "date", "example": "2000-01-01" }
+      },
+      "course": {
+        "name": "course",
+        "in": "query",
+        "required": true,
+        "description": "Course code from the `/api/dashboard` response",
+        "schema": { "type": "string", "example": "21CS51" }
+      }
+    },
+    "schemas": {
+      "Error": {
+        "type": "object",
+        "properties": {
+          "error": { "type": "string", "example": "usn and dob query parameters are required" }
+        }
+      },
+      "Student": {
+        "type": "object",
+        "properties": {
+          "name":            { "type": "string" },
+          "usn":             { "type": "string" },
+          "program":         { "type": "string", "nullable": true },
+          "semester":        { "type": "string", "nullable": true },
+          "section":         { "type": "string", "nullable": true },
+          "fatherName":      { "type": "string", "nullable": true },
+          "yearOfAdmission": { "type": "string", "nullable": true }
+        }
+      },
+      "IDs": {
+        "type": "object",
+        "properties": {
+          "courseId": { "type": "string", "nullable": true },
+          "secId":    { "type": "string", "nullable": true },
+          "semId":    { "type": "string", "nullable": true }
+        }
+      },
+      "AttendanceDetail": {
+        "type": "object",
+        "properties": {
+          "percentage": { "type": "number", "nullable": true },
+          "detailUrl":  { "type": "string", "nullable": true }
+        }
+      },
+      "CIEDetail": {
+        "type": "object",
+        "properties": {
+          "marks":     { "type": "number", "nullable": true },
+          "detailUrl": { "type": "string", "nullable": true }
+        }
+      },
+      "Course": {
+        "type": "object",
+        "properties": {
+          "code":           { "type": "string" },
+          "name":           { "type": "string" },
+          "ids":            { "$ref": "#/components/schemas/IDs" },
+          "attendance":     { "$ref": "#/components/schemas/AttendanceDetail" },
+          "cie":            { "$ref": "#/components/schemas/CIEDetail" },
+          "lessonNotesUrl": { "type": "string", "nullable": true }
+        }
+      },
+      "Thresholds": {
+        "type": "object",
+        "properties": {
+          "85": { "type": "array", "items": { "type": "string" } },
+          "75": { "type": "array", "items": { "type": "string" } }
+        }
+      },
+      "Summary": {
+        "type": "object",
+        "properties": {
+          "totalCourses":      { "type": "integer" },
+          "averageAttendance": { "type": "number", "nullable": true },
+          "belowThreshold":    { "$ref": "#/components/schemas/Thresholds" }
+        }
+      },
+      "Overview": {
+        "type": "object",
+        "properties": {
+          "student": { "$ref": "#/components/schemas/Student" },
+          "courses":  { "type": "array", "items": { "$ref": "#/components/schemas/Course" } },
+          "summary":  { "$ref": "#/components/schemas/Summary" }
+        }
+      },
+      "AttendanceRecord": {
+        "type": "object",
+        "properties": {
+          "date":      { "type": "string" },
+          "startTime": { "type": "string" },
+          "endTime":   { "type": "string" },
+          "isPresent": { "type": "boolean" },
+          "status":    { "type": "string" }
+        }
+      },
+      "AttendanceStats": {
+        "type": "object",
+        "properties": {
+          "totalClasses": { "type": "integer" },
+          "present":      { "type": "integer" },
+          "absent":       { "type": "integer" },
+          "percentage":   { "type": "number" }
+        }
+      },
+      "AttendanceData": {
+        "type": "object",
+        "properties": {
+          "stats":   { "$ref": "#/components/schemas/AttendanceStats" },
+          "records": { "type": "array", "items": { "$ref": "#/components/schemas/AttendanceRecord" } }
+        }
+      },
+      "Marks": {
+        "type": "object",
+        "properties": {
+          "obtained": { "type": "number", "nullable": true },
+          "max":      { "type": "number", "nullable": true },
+          "raw":      { "type": "string" }
+        }
+      },
+      "CIEComponent": {
+        "type": "object",
+        "properties": {
+          "name":  { "type": "string" },
+          "marks": { "$ref": "#/components/schemas/Marks" }
+        }
+      },
+      "CIEData": {
+        "type": "object",
+        "properties": {
+          "components":          { "type": "array", "items": { "$ref": "#/components/schemas/CIEComponent" } },
+          "finalCIE":            { "$ref": "#/components/schemas/Marks" },
+          "attendancePercentage":{ "type": "number", "nullable": true }
+        }
+      },
+      "ExamCourse": {
+        "type": "object",
+        "properties": {
+          "code":             { "type": "string" },
+          "name":             { "type": "string" },
+          "creditRegistered": { "type": "string" },
+          "creditEarned":     { "type": "string" },
+          "gpa":              { "type": "number", "nullable": true },
+          "grade":            { "type": "string" }
+        }
+      },
+      "SemesterResult": {
+        "type": "object",
+        "properties": {
+          "semesterName":      { "type": "string" },
+          "creditsRegistered": { "type": "number", "nullable": true },
+          "creditsEarned":     { "type": "number", "nullable": true },
+          "sgpa":              { "type": "number", "nullable": true },
+          "cgpa":              { "type": "number", "nullable": true },
+          "courses":           { "type": "array", "items": { "$ref": "#/components/schemas/ExamCourse" } }
+        }
+      },
+      "DegreeStats": {
+        "type": "object",
+        "properties": {
+          "creditsRequired": { "type": "number", "nullable": true },
+          "creditsEarned":   { "type": "number", "nullable": true },
+          "creditsToEarn":   { "type": "number", "nullable": true },
+          "cgpa":            { "type": "number", "nullable": true }
+        }
+      },
+      "ExamHistory": {
+        "type": "object",
+        "properties": {
+          "lastUpdated": { "type": "string", "format": "date", "example": "2000-01-01" },
+          "student":     { "$ref": "#/components/schemas/Student" },
+          "degreeStats": { "$ref": "#/components/schemas/DegreeStats" },
+          "semesters":   { "type": "array", "items": { "$ref": "#/components/schemas/SemesterResult" } }
+        }
+      }
+    },
+    "responses": {
+      "BadRequest": {
+        "description": "Missing required query parameters",
+        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } }
+      },
+      "Unauthorized": {
+        "description": "Authentication / login failure",
+        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } }
+      },
+      "NotFound": {
+        "description": "Resource not available for this course",
+        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } }
+      },
+      "InternalError": {
+        "description": "Internal or upstream error",
+        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } }
+      }
+    }
+  },
+  "paths": {
+    "/": {
+      "get": {
+        "summary": "Health check",
+        "description": "Returns a plain-text confirmation that the API is running.",
+        "operationId": "healthCheck",
+        "tags": ["General"],
+        "responses": {
+          "200": {
+            "description": "API is running",
+            "content": { "text/plain": { "schema": { "type": "string", "example": "Contineo API is running" } } }
+          }
+        }
+      }
+    },
+    "/api/dashboard": {
+      "get": {
+        "summary": "Dashboard",
+        "description": "Returns the student's overview: personal details, enrolled courses with attendance and CIE summary, and aggregate stats.",
+        "operationId": "getDashboard",
+        "tags": ["Student"],
+        "parameters": [
+          { "$ref": "#/components/parameters/usn" },
+          { "$ref": "#/components/parameters/dob" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Student overview",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Overview" } } }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    },
+    "/api/attendance": {
+      "get": {
+        "summary": "Attendance detail",
+        "description": "Returns per-class attendance records and aggregate stats for a specific course.",
+        "operationId": "getAttendance",
+        "tags": ["Student"],
+        "parameters": [
+          { "$ref": "#/components/parameters/usn" },
+          { "$ref": "#/components/parameters/dob" },
+          { "$ref": "#/components/parameters/course" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Attendance data for the course",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AttendanceData" } } }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "500": { "$ref": "#/components/responses/InternalError" }
+        }
+      }
+    },
+    "/api/cie": {
+      "get": {
+        "summary": "CIE marks detail",
+        "description": "Returns parsed CIE (continuous internal evaluation) component marks and final CIE for a specific course.",
+        "operationId": "getCIE",
+        "tags": ["Student"],
+        "parameters": [
+          { "$ref": "#/components/parameters/usn" },
+          { "$ref": "#/components/parameters/dob" },
+          { "$ref": "#/components/parameters/course" }
+        ],
+        "responses": {
+          "200": {
+            "description": "CIE data for the course",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CIEData" } } }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "500": { "$ref": "#/components/responses/InternalError" }
+        }
+      }
+    },
+    "/api/exam-history": {
+      "get": {
+        "summary": "Exam history",
+        "description": "Returns semester-wise exam results and overall degree statistics.",
+        "operationId": "getExamHistory",
+        "tags": ["Student"],
+        "parameters": [
+          { "$ref": "#/components/parameters/usn" },
+          { "$ref": "#/components/parameters/dob" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Exam history",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ExamHistory" } } }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "500": { "$ref": "#/components/responses/InternalError" }
+        }
+      }
+    }
+  }
+}

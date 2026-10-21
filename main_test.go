@@ -5,6 +5,8 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+
+	"github.com/arnav-kr/contineo-api/services"
 )
 
 func TestEndpointsViaHandler(t *testing.T) {
@@ -66,6 +68,33 @@ func TestEndpointsViaHandler(t *testing.T) {
 			body := rec.Body.String()
 			if !strings.Contains(body, tt.expectedBody) {
 				t.Errorf("expected body to contain %q, got %q", tt.expectedBody, body)
+			}
+		})
+	}
+}
+
+func TestPortalHelpers(t *testing.T) {
+	tests := []struct {
+		input       string
+		expected    string
+		expectedURL string
+	}{
+		{"even", "even", "https://nmitparents.contineo.in"},
+		{"", "even", "https://nmitparents.contineo.in"},
+		{"odd", "odd", "https://nmitparents.contineo.in/parentsodd"},
+		{"parentsodd", "odd", "https://nmitparents.contineo.in/parentsodd"},
+		{"/parentsodd/", "odd", "https://nmitparents.contineo.in/parentsodd"},
+	}
+
+	for _, tt := range tests {
+		t.Run("Portal_"+tt.input, func(t *testing.T) {
+			got := services.NormalizePortal(tt.input)
+			if got != tt.expected {
+				t.Errorf("NormalizePortal(%q) = %q, want %q", tt.input, got, tt.expected)
+			}
+			url := services.GetBaseURL(tt.input)
+			if url != tt.expectedURL {
+				t.Errorf("GetBaseURL(%q) = %q, want %q", tt.input, url, tt.expectedURL)
 			}
 		})
 	}

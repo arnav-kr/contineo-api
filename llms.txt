@@ -1,50 +1,23 @@
-Contineo API — llms.txt (for MCP agents)
+Contineo API Spec (llms.txt)
 
-Purpose:
-- Quick reference for LLM agents and MCP integrations to fetch parsed student data from the Contineo portal.
-
-Service notes:
-- Base path: `http://localhost:3000`
-- Portal sessions require login cookies; the backend logs in with `usn` + `dob` and caches cookies briefly.
-- Use `dob` in `YYYY-MM-DD` format.
+Base URL: /api
+Auth: Query parameters (`usn`, `dob`, optional `course`, optional `portal`)
+Format: JSON responses, error format `{"error": "message"}`
+Date Format: `YYYY-MM-DD`
 
 Endpoints:
-- `GET /`
-  - Health check.
-  - Returns plain text: `Contineo API is running`.
+- GET /health
+  Status: 200 OK
+  Response: {"status": "ok", "time": "<ISO8601>"}
 
-- `GET /api/dashboard?usn={usn}&dob={dob}`
-  - Returns `models.Overview`.
-  - Fields: `student`, `courses[]`, `summary`.
-  - Use this when you need course codes, attendance URLs, or CIE URLs.
+- GET /api/dashboard?usn={usn}&dob={dob}&portal={even|odd}
+  Returns: Student profile, courses list, attendance summary, active portal.
 
-- `GET /api/attendance?usn={usn}&dob={dob}&course={code}`
-  - Returns `models.AttendanceData`.
-  - Fields: `stats`, `records[]`.
-  - Requires a course code from `/api/dashboard`.
+- GET /api/attendance?usn={usn}&dob={dob}&course={courseCode}&portal={even|odd}
+  Returns: Course attendance statistics and class log records.
 
-- `GET /api/cie?usn={usn}&dob={dob}&course={code}`
-  - Returns `models.CIEData`.
-  - Fields: `components[]`, `finalCIE`, `attendancePercentage`.
-  - Requires a course code from `/api/dashboard`.
+- GET /api/cie?usn={usn}&dob={dob}&course={courseCode}&portal={even|odd}
+  Returns: Internal assessments, component marks, final CIE score.
 
-- `GET /api/exam-history?usn={usn}&dob={dob}`
-  - Returns `models.ExamHistory`.
-  - Fields:
-    - `lastUpdated` in `YYYY-MM-DD`
-    - `student` with `name`, `usn`, `program`, `semester`, `section`, `fatherName`, `yearOfAdmission`
-    - `degreeStats` with `creditsRequired`, `creditsEarned`, `creditsToEarn`, `cgpa`
-    - `semesters[]` with semester-wise course rows and GPA data
-
-Agent guidance:
-- Fetch `/api/dashboard` first when you need course metadata.
-- Reuse the returned JSON instead of repeated scraping.
-- Treat non-200 responses as structured errors: `{ "error": "message" }`.
-- Session expiry is handled server-side, but repeated rapid calls can still trigger re-login.
-
-Example usage:
-
-curl 'http://localhost:3000/api/dashboard?usn=1XX00XX000&dob=2000-01-01'
-curl 'http://localhost:3000/api/attendance?usn=1XX00XX000&dob=2000-01-01&course=22CS33'
-curl 'http://localhost:3000/api/cie?usn=1XX00XX000&dob=2000-01-01&course=22CS33'
-curl 'http://localhost:3000/api/exam-history?usn=1XX00XX000&dob=2000-01-01'
+- GET /api/exam-history?usn={usn}&dob={dob}&portal={even|odd}
+  Returns: Semester-wise results, grades, SGPA, credits, CGPA.

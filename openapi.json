@@ -5,7 +5,7 @@
     "description": "API for accessing Contineo student portal data (dashboard, attendance, CIE marks, exam history).\n\nAll endpoints require `usn` and `dob` query parameters. `/api/attendance` and `/api/cie` additionally require `course`.\n\nErrors are returned as JSON: `{ \"error\": \"message\" }`.",
     "version": "1.0.0",
     "contact": {
-      "url": "https://github.com/arnav-kr/contineo"
+      "url": "https://github.com/arnav-kr/contineo-api"
     }
   },
   "servers": [

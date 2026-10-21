@@ -106,12 +106,13 @@ func buildApp() *fiber.App {
 	api.Get("/dashboard", func(c *fiber.Ctx) error {
 		usn := c.Query("usn")
 		dob := c.Query("dob")
+		portal := c.Query("portal")
 
 		if usn == "" || dob == "" {
 			return fiber.NewError(fiber.StatusBadRequest, "usn and dob query parameters are required")
 		}
 
-		overview, err := services.GetDashboard(usn, dob)
+		overview, err := services.GetDashboard(usn, dob, portal)
 		if err != nil {
 			return fiber.NewError(fiber.StatusUnauthorized, err.Error())
 		}
@@ -123,12 +124,13 @@ func buildApp() *fiber.App {
 		usn := c.Query("usn")
 		dob := c.Query("dob")
 		courseCode := c.Query("course")
+		portal := c.Query("portal")
 
 		if usn == "" || dob == "" || courseCode == "" {
 			return fiber.NewError(fiber.StatusBadRequest, "usn, dob, and course query parameters are required")
 		}
 
-		overview, err := services.GetDashboard(usn, dob)
+		overview, err := services.GetDashboard(usn, dob, portal)
 		if err != nil {
 			return fiber.NewError(fiber.StatusUnauthorized, err.Error())
 		}
@@ -147,7 +149,7 @@ func buildApp() *fiber.App {
 			return fiber.NewError(fiber.StatusNotFound, "Attendance details not available for this course")
 		}
 
-		detail, err := services.GetAttendanceDetail(usn, dob, detailUrl)
+		detail, err := services.GetAttendanceDetail(usn, dob, detailUrl, overview.Portal)
 		if err != nil {
 			return fiber.NewError(fiber.StatusInternalServerError, err.Error())
 		}
@@ -159,12 +161,13 @@ func buildApp() *fiber.App {
 		usn := c.Query("usn")
 		dob := c.Query("dob")
 		courseCode := c.Query("course")
+		portal := c.Query("portal")
 
 		if usn == "" || dob == "" || courseCode == "" {
 			return fiber.NewError(fiber.StatusBadRequest, "usn, dob, and course query parameters are required")
 		}
 
-		overview, err := services.GetDashboard(usn, dob)
+		overview, err := services.GetDashboard(usn, dob, portal)
 		if err != nil {
 			return fiber.NewError(fiber.StatusUnauthorized, err.Error())
 		}
@@ -183,7 +186,7 @@ func buildApp() *fiber.App {
 			return fiber.NewError(fiber.StatusNotFound, "CIE details not available for this course")
 		}
 
-		detail, err := services.GetCIEDetail(usn, dob, detailUrl)
+		detail, err := services.GetCIEDetail(usn, dob, detailUrl, overview.Portal)
 		if err != nil {
 			return fiber.NewError(fiber.StatusInternalServerError, err.Error())
 		}
@@ -194,12 +197,13 @@ func buildApp() *fiber.App {
 	api.Get("/exam-history", func(c *fiber.Ctx) error {
 		usn := c.Query("usn")
 		dob := c.Query("dob")
+		portal := c.Query("portal")
 
 		if usn == "" || dob == "" {
 			return fiber.NewError(fiber.StatusBadRequest, "usn and dob query parameters are required")
 		}
 
-		history, err := services.GetExamHistory(usn, dob)
+		history, err := services.GetExamHistory(usn, dob, portal)
 		if err != nil {
 			return fiber.NewError(fiber.StatusInternalServerError, err.Error())
 		}

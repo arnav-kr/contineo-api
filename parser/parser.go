@@ -60,7 +60,12 @@ func floatPtr(f float64) *float64 {
 	return &f
 }
 
-func ParseOverview(html string) (*models.Overview, error) {
+func ParseOverview(html string, base ...string) (*models.Overview, error) {
+	baseURL := "https://nmitparents.contineo.in"
+	if len(base) > 0 && base[0] != "" {
+		baseURL = strings.TrimRight(base[0], "/")
+	}
+
 	doc, err := goquery.NewDocumentFromReader(strings.NewReader(html))
 	if err != nil {
 		return nil, err
@@ -140,7 +145,7 @@ func ParseOverview(html string) (*models.Overview, error) {
 			course.Attendance.Percentage = floatPtr(val)
 		}
 		if attHref != "" {
-			fullUrl := "https://nmitparents.contineo.in/" + attHref
+			fullUrl := baseURL + "/" + strings.TrimLeft(attHref, "/")
 			course.Attendance.DetailURL = strPtr(fullUrl)
 		}
 
@@ -148,12 +153,12 @@ func ParseOverview(html string) (*models.Overview, error) {
 			course.CIE.Marks = floatPtr(val)
 		}
 		if cieHref != "" {
-			fullUrl := "https://nmitparents.contineo.in/" + cieHref
+			fullUrl := baseURL + "/" + strings.TrimLeft(cieHref, "/")
 			course.CIE.DetailURL = strPtr(fullUrl)
 		}
 
 		if notesHref != "" {
-			fullUrl := "https://nmitparents.contineo.in/" + notesHref
+			fullUrl := baseURL + "/" + strings.TrimLeft(notesHref, "/")
 			course.LessonNotesURL = strPtr(fullUrl)
 		}
 

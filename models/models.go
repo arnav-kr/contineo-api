@@ -47,6 +47,7 @@ type Summary struct {
 }
 
 type Overview struct {
+	Portal  string   `json:"portal,omitempty"`
 	Student Student  `json:"student"`
 	Courses []Course `json:"courses"`
 	Summary Summary  `json:"summary"`

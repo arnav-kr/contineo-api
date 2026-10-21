@@ -3,10 +3,11 @@
 > Unofficial REST API for Contineo parent/student portals. Retrieves real-time student profile, course enrollments, attendance records, CIE internal assessment marks, and exam history.
 
 ## Base Paths
-- API Base: `/api`
-- OpenAPI Spec: `/openapi.json`
-- Interactive Docs: `/docs`
-- Health Checks: `/health`, `/api/health`
+- Hosted Production URL: `https://contineo-api.vercel.app`
+- API Base: `https://contineo-api.vercel.app/api`
+- OpenAPI Spec: `https://contineo-api.vercel.app/openapi.json`
+- Interactive Swagger Docs: `https://contineo-api.vercel.app/docs`
+- Health Checks: `https://contineo-api.vercel.app/health`, `https://contineo-api.vercel.app/api/health`
 
 ## Core Authentication & Parameters
 Requests use URL query parameters:

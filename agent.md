@@ -7,8 +7,11 @@ Instructions and schema specifications for LLMs, autonomous agents, and tool-cal
 ## 1. System Overview
 
 The Contineo API wraps student portals into structured JSON endpoints.
-- **Base URL:** `/api`
-- **Specification:** `/openapi.json`
+- **Hosted Production Base URL:** `https://contineo-api.vercel.app`
+- **API Base Path:** `/api` (e.g. `https://contineo-api.vercel.app/api/dashboard`)
+- **Interactive Swagger UI:** `https://contineo-api.vercel.app/docs`
+- **OpenAPI 3.0 Specification:** `https://contineo-api.vercel.app/openapi.json`
+- **Health Checks:** `https://contineo-api.vercel.app/health` and `/api/health`
 - **Response Format:** `application/json; charset=utf-8`
 - **Authentication:** Stateless query parameters per request (`usn`, `dob`).
 

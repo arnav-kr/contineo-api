@@ -9,6 +9,7 @@
     }
   },
   "servers": [
+    { "url": "https://contineo-api.vercel.app", "description": "Production (Vercel)" },
     { "url": "/", "description": "Current server" }
   ],
   "components": {

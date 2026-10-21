@@ -11,7 +11,18 @@ description: >-
 
 Guide for LLMs and AI agents to query the Contineo student portal API.
 
-## 1. Parameters & Authentication
+## 1. Host & Endpoints Overview
+
+- **Hosted Production Base URL:** `https://contineo-api.vercel.app`
+- **Interactive Swagger UI:** `https://contineo-api.vercel.app/docs`
+- **OpenAPI 3.0 Schema:** `https://contineo-api.vercel.app/openapi.json`
+- **Health Checks:** `https://contineo-api.vercel.app/health` and `/api/health`
+
+Agents querying this service should prepend `https://contineo-api.vercel.app` to all request paths.
+
+---
+
+## 2. Parameters & Authentication
 
 Endpoints authenticate via HTTP GET query parameters:
 
@@ -31,15 +42,15 @@ Endpoints authenticate via HTTP GET query parameters:
 Always follow this sequence when interacting with the API:
 
 ```
-1. Call /api/dashboard?usn={usn}&dob={dob}
+1. Call https://contineo-api.vercel.app/api/dashboard?usn={usn}&dob={dob}
    ├── Inspect profile details and enrolled courses
    ├── Check `summary.belowThreshold` for attendance warnings (<75% and <85%)
    └── Note `portal` ("even" or "odd") returned in payload
 
 2. If specific details requested:
-   ├── Attendance breakdown: Call /api/attendance?usn={usn}&dob={dob}&course={courseCode}&portal={portal}
-   ├── CIE / internal marks: Call /api/cie?usn={usn}&dob={dob}&course={courseCode}&portal={portal}
-   └── Cumulative degree & SGPA: Call /api/exam-history?usn={usn}&dob={dob}&portal={portal}
+   ├── Attendance breakdown: Call https://contineo-api.vercel.app/api/attendance?usn={usn}&dob={dob}&course={courseCode}&portal={portal}
+   ├── CIE / internal marks: Call https://contineo-api.vercel.app/api/cie?usn={usn}&dob={dob}&course={courseCode}&portal={portal}
+   └── Cumulative degree & SGPA: Call https://contineo-api.vercel.app/api/exam-history?usn={usn}&dob={dob}&portal={portal}
 ```
 
 ---
@@ -48,13 +59,13 @@ Always follow this sequence when interacting with the API:
 
 ### 3.1 Overview (`/api/dashboard`)
 ```http
-GET /api/dashboard?usn={usn}&dob={dob}&portal={even|odd}
+GET https://contineo-api.vercel.app/api/dashboard?usn={usn}&dob={dob}&portal={even|odd}
 ```
 Returns student profile metadata, enrolled courses list, attendance percentages, CIE totals, and aggregate statistics.
 
 ### 3.2 Attendance Details (`/api/attendance`)
 ```http
-GET /api/attendance?usn={usn}&dob={dob}&course={courseCode}&portal={even|odd}
+GET https://contineo-api.vercel.app/api/attendance?usn={usn}&dob={dob}&course={courseCode}&portal={even|odd}
 ```
 Returns class attendance breakdown:
 - `stats`: `totalClasses`, `present`, `absent`, `percentage`
@@ -62,7 +73,7 @@ Returns class attendance breakdown:
 
 ### 3.3 Internal Evaluation / CIE (`/api/cie`)
 ```http
-GET /api/cie?usn={usn}&dob={dob}&course={courseCode}&portal={even|odd}
+GET https://contineo-api.vercel.app/api/cie?usn={usn}&dob={dob}&course={courseCode}&portal={even|odd}
 ```
 Returns:
 - `components`: Breakdown of tests, assignments, quizzes (`obtained`, `max`, `raw`).
@@ -71,7 +82,7 @@ Returns:
 
 ### 3.4 Examination History (`/api/exam-history`)
 ```http
-GET /api/exam-history?usn={usn}&dob={dob}&portal={even|odd}
+GET https://contineo-api.vercel.app/api/exam-history?usn={usn}&dob={dob}&portal={even|odd}
 ```
 Returns:
 - `degreeStats`: Total credits required, earned, remaining, and cumulative CGPA.

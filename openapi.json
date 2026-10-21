@@ -33,6 +33,13 @@
         "required": true,
         "description": "Course code from the `/api/dashboard` response",
         "schema": { "type": "string", "example": "21CS51" }
+      },
+      "portal": {
+        "name": "portal",
+        "in": "query",
+        "required": false,
+        "description": "Target portal: `even` or `odd` (`parentsodd`). If omitted, auto-resolves with fallback.",
+        "schema": { "type": "string", "enum": ["even", "odd", "parentsodd"], "default": "even" }
       }
     },
     "schemas": {
@@ -105,7 +112,8 @@
       "Overview": {
         "type": "object",
         "properties": {
-          "student": { "$ref": "#/components/schemas/Student" },
+          "portal":   { "type": "string", "example": "even" },
+          "student":  { "$ref": "#/components/schemas/Student" },
           "courses":  { "type": "array", "items": { "$ref": "#/components/schemas/Course" } },
           "summary":  { "$ref": "#/components/schemas/Summary" }
         }
@@ -224,12 +232,36 @@
       "get": {
         "summary": "Health check",
         "description": "Returns a plain-text confirmation that the API is running.",
-        "operationId": "healthCheck",
+        "operationId": "healthCheckRoot",
         "tags": ["General"],
         "responses": {
           "200": {
             "description": "API is running",
             "content": { "text/plain": { "schema": { "type": "string", "example": "Contineo API is running" } } }
+          }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "summary": "Health status",
+        "description": "Returns JSON status indicating the service is healthy.",
+        "operationId": "healthCheck",
+        "tags": ["General"],
+        "responses": {
+          "200": {
+            "description": "Service status",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string", "example": "ok" },
+                    "time": { "type": "string", "format": "date-time" }
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -242,7 +274,8 @@
         "tags": ["Student"],
         "parameters": [
           { "$ref": "#/components/parameters/usn" },
-          { "$ref": "#/components/parameters/dob" }
+          { "$ref": "#/components/parameters/dob" },
+          { "$ref": "#/components/parameters/portal" }
         ],
         "responses": {
           "200": {
@@ -263,7 +296,8 @@
         "parameters": [
           { "$ref": "#/components/parameters/usn" },
           { "$ref": "#/components/parameters/dob" },
-          { "$ref": "#/components/parameters/course" }
+          { "$ref": "#/components/parameters/course" },
+          { "$ref": "#/components/parameters/portal" }
         ],
         "responses": {
           "200": {
@@ -286,7 +320,8 @@
         "parameters": [
           { "$ref": "#/components/parameters/usn" },
           { "$ref": "#/components/parameters/dob" },
-          { "$ref": "#/components/parameters/course" }
+          { "$ref": "#/components/parameters/course" },
+          { "$ref": "#/components/parameters/portal" }
         ],
         "responses": {
           "200": {
@@ -308,7 +343,8 @@
         "tags": ["Student"],
         "parameters": [
           { "$ref": "#/components/parameters/usn" },
-          { "$ref": "#/components/parameters/dob" }
+          { "$ref": "#/components/parameters/dob" },
+          { "$ref": "#/components/parameters/portal" }
         ],
         "responses": {
           "200": {

@@ -54,21 +54,33 @@ Create your own student assistant GPT that fetches real-time data:
 
 ---
 
-### 3. Google Gemini (Gems)
-1. Go to [gemini.google.com](https://gemini.google.com) -> In the sidebar click **Gem manager** -> **+ New Gem**.
-2. **Name:** Contineo Assistant
-3. In **Instructions**, paste:
-   ```text
-   You are an assistant for college students using Contineo.
-   The REST API is hosted at https://contineo-api.vercel.app.
+### 3. Google Gemini (Skills & Gems)
+
+Google Gemini supports both modular **Skills** (invoked with `/` or `@` inside chats) and dedicated **Gems**:
+
+#### Option A: Gemini Skills (New)
+1. Go to [gemini.google.com](https://gemini.google.com) -> Navigate to **Skills** (or **Skill Manager** in your settings/sidebar).
+2. Click **Create Skill** (or Import):
+   - **Name:** `contineo`
+   - **Trigger:** Type `/contineo` or `@contineo` in chat.
+   - **Description:** Checks college student attendance, internal marks, and exam grades from Contineo.
+3. In the skill instructions, paste:
+   ```markdown
+   API Base URL: https://contineo-api.vercel.app
    Endpoints:
-   - Dashboard & enrolled courses: https://contineo-api.vercel.app/api/dashboard?usn={usn}&dob={dob}
-   - Attendance logs: https://contineo-api.vercel.app/api/attendance?usn={usn}&dob={dob}&course={course}
+   - Dashboard & courses: https://contineo-api.vercel.app/api/dashboard?usn={usn}&dob={dob}
+   - Attendance details: https://contineo-api.vercel.app/api/attendance?usn={usn}&dob={dob}&course={course}
    - CIE marks: https://contineo-api.vercel.app/api/cie?usn={usn}&dob={dob}&course={course}
-   - Exam history: https://contineo-api.vercel.app/api/exam-history?usn={usn}&dob={dob}
-   Always verify the date of birth is in YYYY-MM-DD format. Demo account for testing: USN 1NT24CS006 with any DOB.
+   - Exam results: https://contineo-api.vercel.app/api/exam-history?usn={usn}&dob={dob}
+
+   Always ensure dob is YYYY-MM-DD. For testing, use USN 1NT24CS006 with any DOB.
    ```
-4. Save the Gem.
+4. Save the skill. In any Gemini chat, type `/contineo` followed by your student USN and DOB.
+
+#### Option B: Dedicated Gem
+1. Open **Gem manager** -> **+ New Gem**.
+2. Set name to **Contineo Assistant** and paste the same instructions above.
+3. Save and chat directly within the dedicated Gem.
 
 ---
 

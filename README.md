@@ -1,124 +1,153 @@
+<div align="center">
+
 # Contineo API
 
-A clean REST API for Contineo parent and student portals. Fetch attendance, CIE test marks, subject lists, and semester exam history as structured JSON without dealing with messy HTML tables or session logins.
+A high-performance Go REST API and scraping engine for Contineo student and parent portals. Normalizes unstructured portal HTML into clean, typed JSON payloads with serverless deployment on Vercel (`bom1` region), Redis session caching, and mock test mode.
 
-- **Hosted URL:** [https://contineo-api.vercel.app](https://contineo-api.vercel.app)
-- **Interactive Swagger Docs:** [https://contineo-api.vercel.app/docs](https://contineo-api.vercel.app/docs)
-- **OpenAPI 3.0 Spec:** [https://contineo-api.vercel.app/openapi.json](https://contineo-api.vercel.app/openapi.json)
-- **LLM Context:** [llms.txt](llms.txt) | [agent.md](agent.md)
+[![Go](https://img.shields.io/badge/Go-1.22+-00ADD8?style=for-the-badge&logo=go&logoColor=white)](https://go.dev)
+[![Vercel](https://img.shields.io/badge/Vercel-Deployed-black?style=for-the-badge&logo=vercel&logoColor=white)](https://contineo-api.vercel.app)
+[![OpenAPI](https://img.shields.io/badge/OpenAPI-3.0.3-6BA539?style=for-the-badge&logo=openapiinitiative&logoColor=white)](https://contineo-api.vercel.app/openapi.json)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=for-the-badge)](LICENSE)
+
+[Live API](https://contineo-api.vercel.app) • [Swagger UI](https://contineo-api.vercel.app/docs) • [OpenAPI Spec](https://contineo-api.vercel.app/openapi.json) • [Full Documentation](DOCS.md)
+
+</div>
 
 ---
 
-## Quick Test (No credentials needed!)
+## Features
 
-Want to test the API or see what the responses look like? You don't need real college credentials. We have built-in mock student data:
+- **Automated Multi-Portal Routing**: Auto-resolves credentials between standard (`even`) and `parentsodd` (`odd`) portals with automatic fallback.
+- **Strict Typed Schemas**: Clean Go models for student profiles, course registries, class attendance logs, CIE components, and degree credit audits.
+- **Serverless & Edge Ready**: Deployed on Vercel Serverless Functions pinned to Mumbai, India (`bom1`) to prevent portal geo-blocking.
+- **Built-in Mock Account**: Dedicated test student (`1NT24CS006`) returning deterministic test fixtures across all endpoints for testing without credentials.
+- **Agent & AI Native**: Includes pre-built agent skill manifests (`.agents/skills/`), `llms.txt`, and `agent.md` for tool-calling agents and custom LLM actions.
+- **Redis Session Caching**: Preserves session cookies and caches parsed responses with TTLs when `REDIS_URL` is configured.
+
+---
+
+## Architecture Flow
+
+```
+                      Client Request
+             (usn, dob, course?, portal?)
+                          │
+                          ▼
+             ┌─────────────────────────┐
+             │  Contineo API (Fiber)   │
+             │   Vercel Serverless     │
+             └────────────┬────────────┘
+                          │
+         ┌────────────────┴────────────────┐
+         ▼                                 ▼
+   [Mock Student]                   [Live Student]
+   USN: 1NT24CS006                         │
+         │                         ┌───────┴───────┐
+         ▼                         ▼               ▼
+   Mock Fixture            Primary Portal    Fallback Portal
+   (Instant JSON)             ("even")          ("odd")
+                                   │               │
+                                   └───────┬───────┘
+                                           │
+                                           ▼
+                                 [Goquery HTML Parser]
+                                           │
+                                           ▼
+                                  Typed JSON Response
+```
+
+---
+
+## Quick Reference & Endpoints
+
+Base URL: `https://contineo-api.vercel.app`
+
+| Endpoint | Method | Parameters | Description |
+| :--- | :--- | :--- | :--- |
+| `/health` | `GET` | — | Service uptime and timestamp |
+| `/api/dashboard` | `GET` | `usn`, `dob`, `portal`? | Student details, registered courses, attendance overview, warnings |
+| `/api/attendance` | `GET` | `usn`, `dob`, `course`, `portal`? | Full attendance log and present/absent counts |
+| `/api/cie` | `GET` | `usn`, `dob`, `course`, `portal`? | CIE component marks (IA tests, assignments) and final score |
+| `/api/exam-history` | `GET` | `usn`, `dob`, `portal`? | Semester-by-semester grades, credit completion, SGPA, CGPA |
+
+### Authentication & Parameters
+
+- `usn` (string, required): Student University Seat Number.
+- `dob` (string, required): Date of birth in `YYYY-MM-DD` format.
+- `course` (string): Course code obtained from `/api/dashboard` (required for `/api/attendance` and `/api/cie`).
+- `portal` (string, optional): Target portal override (`even` or `odd`). Omit to let the engine auto-resolve.
+
+---
+
+## Mock Mode (Testing)
+
+Test API responses without real student credentials using the reserved mock USN:
 
 - **USN:** `1NT24CS006`
-- **DOB:** Any date (e.g. `2000-01-01`)
-- **Demo Subjects:** `21CS41`, `21CS42`, `21CS43`
+- **DOB:** Any string (e.g. `2000-01-01`)
+- **Demo Courses:** `21CS41`, `21CS42`, `21CS43`
 
-Try it straight in your browser:
-- [View Dashboard](https://contineo-api.vercel.app/api/dashboard?usn=1NT24CS006&dob=2000-01-01)
-- [View Attendance for 21CS41](https://contineo-api.vercel.app/api/attendance?usn=1NT24CS006&dob=2000-01-01&course=21CS41)
-- [View CIE Marks for 21CS41](https://contineo-api.vercel.app/api/cie?usn=1NT24CS006&dob=2000-01-01&course=21CS41)
-- [View Exam History & CGPA](https://contineo-api.vercel.app/api/exam-history?usn=1NT24CS006&dob=2000-01-01)
+```bash
+# Dashboard
+curl "https://contineo-api.vercel.app/api/dashboard?usn=1NT24CS006&dob=2000-01-01"
+
+# Attendance for 21CS41
+curl "https://contineo-api.vercel.app/api/attendance?usn=1NT24CS006&dob=2000-01-01&course=21CS41"
+
+# CIE Marks for 21CS41
+curl "https://contineo-api.vercel.app/api/cie?usn=1NT24CS006&dob=2000-01-01&course=21CS41"
+
+# Exam History
+curl "https://contineo-api.vercel.app/api/exam-history?usn=1NT24CS006&dob=2000-01-01"
+```
 
 ---
 
-## Connect It to Your Favorite AI
+## AI Assistant & Skill Integration
 
-Hook Contineo straight into your daily AI so you can just ask *"How's my attendance this week?"* or *"What did I score in my internal tests?"*.
-
-### ChatGPT (Create a Custom GPT)
-You can build your own personal college bot in 2 minutes:
-1. Open ChatGPT, tap **Explore GPTs** in the sidebar, and click **+ Create**.
-2. Head to the **Configure** tab and name it something like *College Buddy*.
-3. Scroll down to **Actions** -> click **Create new action**.
-4. Tap **Import from URL** and paste:
+### 1. ChatGPT (Custom GPT Action)
+1. In **GPT Editor** -> **Configure** -> **Actions** -> click **Create new action**.
+2. Click **Import from URL** and paste:
    ```
    https://contineo-api.vercel.app/openapi.json
    ```
-5. In **Instructions**, add:
-   ```text
-   You help students check their college status via the Contineo API.
-   Ask the user for their USN and DOB (format YYYY-MM-DD) if you don't know it yet.
-   Call /api/dashboard first to see their enrolled courses and attendance percentages.
-   When they ask about a specific subject's class logs or CIE scores, use /api/attendance or /api/cie with that course code.
-   For past semesters or CGPA, check /api/exam-history.
-   For demos without credentials, test USN "1NT24CS006" works with any DOB.
-   ```
-6. Save it for yourself, and you're good to go!
+3. Set instructions to prompt for `usn` and `dob` (`YYYY-MM-DD`), fetch `/api/dashboard` first, then drill down into `/api/attendance` or `/api/cie` using the retrieved course codes.
+
+### 2. Google Gemini (Skills & Gems)
+- **Gemini Skill**: Create a skill with shortcut `/contineo` that points to `https://contineo-api.vercel.app/openapi.json` and uses the prompt template from [`agent.md`](agent.md).
+- **Gem**: Create a Gem with the endpoints and parameter contracts defined in [`llms.txt`](llms.txt).
+
+### 3. Claude (Projects)
+Upload [`agent.md`](agent.md) or [`llms.txt`](llms.txt) to **Project Knowledge** on [claude.ai](https://claude.ai).
+
+### 4. Coding Agents (Antigravity, Cursor, Windsurf)
+- **Antigravity / Gemini CLI**: Auto-discovers the skill at [`.agents/skills/contineo-api-client/SKILL.md`](.agents/skills/contineo-api-client/SKILL.md).
+- **Cursor / Windsurf**: Add a reference in `.cursorrules` or `.windsurfrules` pointing to `.agents/skills/contineo-api-client/SKILL.md`.
 
 ---
 
-### Google Gemini (Skills & Gems)
+## Local Development
 
-#### Using Gemini Skills
-If your Gemini account has **Skills** enabled:
-1. Open [gemini.google.com](https://gemini.google.com) and go to **Skills**.
-2. Create a new skill called `contineo` with trigger `/contineo`.
-3. In instructions, tell it:
-   ```text
-   Contineo API Base: https://contineo-api.vercel.app
-   - Dashboard: /api/dashboard?usn={usn}&dob={dob}
-   - Attendance: /api/attendance?usn={usn}&dob={dob}&course={course}
-   - CIE Marks: /api/cie?usn={usn}&dob={dob}&course={course}
-   - Results: /api/exam-history?usn={usn}&dob={dob}
-   Use YYYY-MM-DD for DOB. Test USN: 1NT24CS006 with any DOB.
-   ```
-4. Now in any chat, just type `/contineo` followed by your USN and DOB.
+### Prerequisites
+- Go `1.22+`
 
-#### Using a Gem
-Prefer a separate chat? Go to **Gem manager** -> **+ New Gem**, name it *Contineo Assistant*, and paste the same instructions.
-
----
-
-### Claude (Projects)
-1. Go to [claude.ai](https://claude.ai) and create a new **Project**.
-2. In **Project Knowledge**, upload [`agent.md`](agent.md) or [`llms.txt`](llms.txt).
-3. Under custom instructions, paste:
-   ```text
-   Use the Contineo API at https://contineo-api.vercel.app to look up college records.
-   Endpoints include /api/dashboard, /api/attendance, /api/cie, and /api/exam-history.
-   Always expect DOB as YYYY-MM-DD. Test USN: 1NT24CS006.
-   ```
-
----
-
-### Developer Coding Agents (Cursor, Windsurf, Antigravity)
-- **Antigravity / Gemini CLI**: The repository already includes a pre-packaged skill in `.agents/skills/contineo-api-client`. It will be detected automatically.
-- **Cursor / Windsurf**: Mention `@.agents/skills/contineo-api-client/SKILL.md` in chat or add it to `.cursorrules` / `.windsurfrules`.
-- **Claude Code**: Append the skill to your `CLAUDE.md`.
-
----
-
-## Endpoints Cheatsheet
-
-All endpoints use `GET` and take student credentials as query parameters:
-
-| Endpoint | Required Query Params | What You Get |
-| :--- | :--- | :--- |
-| `/api/dashboard` | `usn`, `dob`, `portal`? | Student details, course list, attendance averages & <75% warnings |
-| `/api/attendance` | `usn`, `dob`, `course`, `portal`? | Full attendance log (dates, present/absent counts, percentage) |
-| `/api/cie` | `usn`, `dob`, `course`, `portal`? | IA test marks, assignment scores, and final calculated CIE |
-| `/api/exam-history` | `usn`, `dob`, `portal`? | Semester-by-semester grades, credit totals, SGPA, and CGPA |
-| `/health` | *none* | Service status check |
-
-> **Note on `portal`:** The API automatically checks both `even` and `odd` semesters, so you usually don't need to specify it unless you want to force one.
-
-For full schema details and error responses, check [DOCS.md](DOCS.md) or [Swagger UI](https://contineo-api.vercel.app/docs).
-
----
-
-## Running Locally
-
+### Setup
 ```bash
+# Clone repository
 git clone https://github.com/arnav-kr/contineo-api.git
 cd contineo-api
 
-# Run tests
+# Run test suite
 go test -v .
 
-# Start API server on localhost:3000
+# Run local development server
 go run main.go
 ```
+
+The server binds to port `3000` by default (`http://localhost:3000`).
+
+---
+
+## License
+
+This project is licensed under the MIT License.

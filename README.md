@@ -9,52 +9,76 @@ LLM Reference: **[llms.txt](llms.txt)** | Agent Integration Guide: **[agent.md](
 
 ---
 
-## Installing the Skill in AI Assistants
+## Using with AI Assistants (ChatGPT, Claude, Gemini, etc.)
 
-You can install and use the `contineo-api-client` skill across various AI coding assistants and agent frameworks.
+You can give everyday AI chat assistants the ability to check your Contineo attendance, marks, and academic status.
 
-### 1. Antigravity / Gemini CLI
-The skill is located in `.agents/skills/contineo-api-client`.
-- **Project-level**: Antigravity automatically discovers skills inside `.agents/skills/` when opening this repository.
-- **Global installation**: Copy the skill directory to your global Antigravity config:
-  ```bash
-  # Linux / macOS
-  mkdir -p ~/.gemini/config/skills
-  cp -r .agents/skills/contineo-api-client ~/.gemini/config/skills/
-
-  # Windows (PowerShell)
-  New-Item -ItemType Directory -Force -Path "$HOME\.gemini\config\skills"
-  Copy-Item -Recurse -Force ".agents\skills\contineo-api-client" "$HOME\.gemini\config\skills\"
-  ```
-
-### 2. Cursor
-To use with Cursor's Agent and Composer:
-- Add a project rule in `.cursorrules` or `.cursor/rules/contineo.mdc`:
-  ```markdown
-  Read and follow the guidelines in .agents/skills/contineo-api-client/SKILL.md whenever querying student attendance, CIE marks, or exam results via https://contineo-api.vercel.app.
-  ```
-- Alternatively, reference `@.agents/skills/contineo-api-client/SKILL.md` directly in Cursor chat.
-
-### 3. Claude Code / Anthropic
-Add the skill to Claude Code memory or system prompt:
-- Copy the skill file into Claude's prompt or memory file:
-  ```bash
-  cat .agents/skills/contineo-api-client/SKILL.md >> CLAUDE.md
-  ```
-
-### 4. Windsurf / Codeium
-Add the skill to `.windsurfrules`:
-```markdown
-When fetching student portal data or answering questions about student attendance, CIE, or exam grades, follow the workflow and schema defined in `.agents/skills/contineo-api-client/SKILL.md` using the API at `https://contineo-api.vercel.app`.
-```
-
-### 5. OpenAI Custom GPTs / Assistants
-1. Navigate to **GPT Editor** -> **Configure** -> **Actions**.
-2. Click **Import from URL** and paste:
+### 1. ChatGPT (Custom GPT)
+Create your own student assistant GPT that fetches real-time data:
+1. Go to **ChatGPT** -> Click on your profile or sidebar -> **Explore GPTs** -> **+ Create**.
+2. Go to the **Configure** tab:
+   - **Name:** Contineo Student Assistant
+   - **Description:** Checks attendance, CIE marks, and exam history from Contineo.
+3. Scroll down to **Actions** -> Click **Create new action**.
+4. In **Schema**, click **Import from URL** and paste:
    ```
    https://contineo-api.vercel.app/openapi.json
    ```
-3. In **Instructions**, copy and paste the contents of [`.agents/skills/contineo-api-client/SKILL.md`](.agents/skills/contineo-api-client/SKILL.md) or [`agent.md`](agent.md).
+5. In **Instructions**, copy and paste:
+   ```text
+   You are a student assistant connected to the Contineo API.
+   When asked for attendance, marks, or grades, prompt the user for their USN and DOB (format YYYY-MM-DD) if not provided.
+   First call GET /api/dashboard with the usn and dob to fetch student courses and overview.
+   If the user asks for detailed attendance or CIE marks for a specific subject, find the matching course code from the dashboard response and call /api/attendance or /api/cie with that course code.
+   For overall credits, SGPA, and semester grades, call /api/exam-history.
+   For testing purposes without real student credentials, you can use USN "1NT24CS006" with any DOB.
+   ```
+6. Click **Save** / **Publish** (select "Only me" for private use).
+
+---
+
+### 2. Claude (Projects / Custom Instructions)
+1. Go to [claude.ai](https://claude.ai) -> Open or create a **Project** (or use Custom Instructions).
+2. Under **Project Knowledge** (or chat attachment), upload the [`agent.md`](agent.md) or [`llms.txt`](llms.txt) file.
+3. In **Custom Instructions for this project**, paste:
+   ```text
+   You have access to the Contineo API hosted at https://contineo-api.vercel.app.
+   API endpoints:
+   - GET https://contineo-api.vercel.app/api/dashboard?usn={usn}&dob={dob}
+   - GET https://contineo-api.vercel.app/api/attendance?usn={usn}&dob={dob}&course={courseCode}
+   - GET https://contineo-api.vercel.app/api/cie?usn={usn}&dob={dob}&course={courseCode}
+   - GET https://contineo-api.vercel.app/api/exam-history?usn={usn}&dob={dob}
+   When I ask about attendance or grades, generate the exact URL for me to open or use web search/artifacts if enabled.
+   Mock demo USN for testing: 1NT24CS006 (any DOB).
+   ```
+
+---
+
+### 3. Google Gemini (Gems)
+1. Go to [gemini.google.com](https://gemini.google.com) -> In the sidebar click **Gem manager** -> **+ New Gem**.
+2. **Name:** Contineo Assistant
+3. In **Instructions**, paste:
+   ```text
+   You are an assistant for college students using Contineo.
+   The REST API is hosted at https://contineo-api.vercel.app.
+   Endpoints:
+   - Dashboard & enrolled courses: https://contineo-api.vercel.app/api/dashboard?usn={usn}&dob={dob}
+   - Attendance logs: https://contineo-api.vercel.app/api/attendance?usn={usn}&dob={dob}&course={course}
+   - CIE marks: https://contineo-api.vercel.app/api/cie?usn={usn}&dob={dob}&course={course}
+   - Exam history: https://contineo-api.vercel.app/api/exam-history?usn={usn}&dob={dob}
+   Always verify the date of birth is in YYYY-MM-DD format. Demo account for testing: USN 1NT24CS006 with any DOB.
+   ```
+4. Save the Gem.
+
+---
+
+### 4. Developer / Agent Skills (Cursor, Antigravity, Windsurf)
+
+If you are using AI coding agents:
+- **Antigravity / Gemini CLI:** Skills inside `.agents/skills/contineo-api-client` are auto-discovered, or copy to `~/.gemini/config/skills/`.
+- **Cursor:** Mention `@.agents/skills/contineo-api-client/SKILL.md` or add a rule in `.cursorrules`.
+- **Windsurf:** Add a rule in `.windsurfrules` pointing to `.agents/skills/contineo-api-client/SKILL.md`.
+- **Claude Code:** Add to `CLAUDE.md`.
 
 ---
 

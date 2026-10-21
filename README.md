@@ -24,7 +24,9 @@ Base URL: `https://contineo-api.vercel.app`
 
 All requests take `usn` and `dob` (`YYYY-MM-DD`).
 - **Portal**: Automatically checks both `even` and `odd` (`parentsodd`) portals with fallback.
-- **College**: Auto-detected from USN prefix (e.g. `1NT` -> NMIT, `4SO` -> SJEC, `WIT` -> WIT), or set explicitly via `college=sjec` / `college=wit` / custom domain. Can also set `CONTINEO_BASE_HOST` in environment.
+- **College**: Defaults to NMIT (`nmitparents.contineo.in`). Auto-detected from USN prefix (e.g. `1NT` -> NMIT, `4SO` -> SJEC, `WIT` -> WIT), or set explicitly via `college=sjec` / `college=wit` / custom domain.
+
+> **Disclaimer**: Only NMIT's portal is actively tested and verified to work. Other college endpoints are structured similarly but untested—minor HTML table or login differences may exist.
 
 ---
 

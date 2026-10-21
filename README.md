@@ -2,7 +2,7 @@
 
 Unofficial Go REST API and scraper for Contineo parent and student portals (attendance, CIE internal marks, registered courses, and exam history).
 
-Hosted on Vercel (`bom1` region to avoid portal geo-blocks): **[https://contineo-api.vercel.app](https://contineo-api.vercel.app)**
+Hosted at **[https://contineo-api.vercel.app](https://contineo-api.vercel.app)**
 
 - **Swagger Docs:** [https://contineo-api.vercel.app/docs](https://contineo-api.vercel.app/docs)
 - **OpenAPI 3.0 Spec:** [https://contineo-api.vercel.app/openapi.json](https://contineo-api.vercel.app/openapi.json)

@@ -18,10 +18,17 @@ The Contineo API wraps student portals into structured JSON endpoints.
 
 | Parameter | Type | Required | Allowed Values / Format | Description |
 | :--- | :--- | :--- | :--- | :--- |
-| `usn` | `string` | Yes | Match student USN format | University Seat Number |
-| `dob` | `string` | Yes | `YYYY-MM-DD` | Date of Birth |
+| `usn` | `string` | Yes | Match student USN format | University Seat Number. Use `1NT24CS006` for mock test data. |
+| `dob` | `string` | Yes | `YYYY-MM-DD` | Date of Birth. Any string accepted when `usn=1NT24CS006`. |
 | `portal` | `string` | No | `even`, `odd`, `parentsodd` | Portal to query. Auto-falls back to the alternate portal if omitted. |
-| `course` | `string` | Endpoint-dependent | Extracted course `code` | Required for `/api/attendance` and `/api/cie`. |
+| `course` | `string` | Endpoint-dependent | Extracted course `code` | Required for `/api/attendance` and `/api/cie` (e.g. `21CS41` for test student). |
+
+### Test / Mock Student Mode
+To test API response contracts without real student credentials:
+- **USN:** `1NT24CS006`
+- **DOB:** Any value (e.g. `2000-01-01`)
+- **Courses available:** `21CS41`, `21CS42`, `21CS43`
+All endpoints (`/api/dashboard`, `/api/attendance`, `/api/cie`, `/api/exam-history`) return realistic mock responses for this account.
 
 ---
 

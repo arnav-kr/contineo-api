@@ -11,10 +11,11 @@
 server
 bin/
 
-# Test dumps
-test/dumps/*.html
-test/dumps/*.txt
-*_dump.html
+# Test dumps & scratch files
+test/
+*.html
+*.txt
+*.log
 
 # IDE & OS
 .idea/

@@ -10,10 +10,10 @@
 
 ## Core Authentication & Parameters
 Requests use URL query parameters:
-- `usn` (string, required): Student University Seat Number (e.g. `1XX00XX000`)
-- `dob` (string, required): Date of birth in `YYYY-MM-DD` format (e.g. `2000-01-01`)
+- `usn` (string, required): Student University Seat Number. Use test USN `1NT24CS006` to receive mock demo responses without real credentials.
+- `dob` (string, required): Date of birth in `YYYY-MM-DD` format (accepted as any value when using test USN `1NT24CS006`).
 - `portal` (string, optional): Portal variant: `even` (default) or `odd` (`parentsodd`). Auto-detected with fallback when omitted.
-- `course` (string, required for course-specific endpoints): Course code from `/api/dashboard` (e.g. `21CS51`)
+- `course` (string, required for course-specific endpoints): Course code from `/api/dashboard` (e.g. `21CS41` for test student)
 
 ## Endpoint Summary
 1. `GET /api/dashboard?usn={usn}&dob={dob}&portal={even|odd}`

@@ -17,8 +17,8 @@
         "name": "usn",
         "in": "query",
         "required": true,
-        "description": "Student USN",
-        "schema": { "type": "string", "example": "1XX00XX000" }
+        "description": "Student USN (use test USN `1NT24CS006` for mock responses with any DOB)",
+        "schema": { "type": "string", "example": "1NT24CS006" }
       },
       "dob": {
         "name": "dob",

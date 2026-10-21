@@ -260,6 +260,10 @@ func GetDashboard(usn, dob string, portal ...string) (*models.Overview, error) {
 		requestedPortal = strings.TrimSpace(portal[0])
 	}
 
+	if IsTestStudent(usn) {
+		return GetTestDashboard(requestedPortal), nil
+	}
+
 	// Explicit portal request: target that portal directly
 	if requestedPortal == "odd" || requestedPortal == "parentsodd" || requestedPortal == "even" {
 		return getDashboardForPortal(usn, dob, requestedPortal)

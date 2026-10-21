@@ -99,3 +99,55 @@ func TestPortalHelpers(t *testing.T) {
 		})
 	}
 }
+
+func TestMockStudentEndpoints(t *testing.T) {
+	tests := []struct {
+		name           string
+		path           string
+		expectedStatus int
+		expectedBody   string
+	}{
+		{
+			name:           "Mock Dashboard",
+			path:           "/api/dashboard?usn=1NT24CS006&dob=2000-01-01",
+			expectedStatus: http.StatusOK,
+			expectedBody:   `"usn":"1NT24CS006"`,
+		},
+		{
+			name:           "Mock Attendance",
+			path:           "/api/attendance?usn=1NT24CS006&dob=any-date&course=21CS41",
+			expectedStatus: http.StatusOK,
+			expectedBody:   `"totalClasses":40`,
+		},
+		{
+			name:           "Mock CIE",
+			path:           "/api/cie?usn=1NT24CS006&dob=random&course=21CS41",
+			expectedStatus: http.StatusOK,
+			expectedBody:   `"raw":"44.0 / 50"`,
+		},
+		{
+			name:           "Mock Exam History",
+			path:           "/api/exam-history?usn=1NT24CS006&dob=any",
+			expectedStatus: http.StatusOK,
+			expectedBody:   `"creditsEarned":64`,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			req := httptest.NewRequest(http.MethodGet, tt.path, nil)
+			rec := httptest.NewRecorder()
+
+			Handler(rec, req)
+
+			if rec.Code != tt.expectedStatus {
+				t.Errorf("expected status %d, got %d", tt.expectedStatus, rec.Code)
+			}
+
+			body := rec.Body.String()
+			if !strings.Contains(body, tt.expectedBody) {
+				t.Errorf("expected body to contain %q, got %q", tt.expectedBody, body)
+			}
+		})
+	}
+}

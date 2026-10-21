@@ -130,6 +130,10 @@ func buildApp() *fiber.App {
 			return fiber.NewError(fiber.StatusBadRequest, "usn, dob, and course query parameters are required")
 		}
 
+		if services.IsTestStudent(usn) {
+			return c.JSON(services.GetTestAttendanceDetail(courseCode))
+		}
+
 		overview, err := services.GetDashboard(usn, dob, portal)
 		if err != nil {
 			return fiber.NewError(fiber.StatusUnauthorized, err.Error())
@@ -167,6 +171,10 @@ func buildApp() *fiber.App {
 			return fiber.NewError(fiber.StatusBadRequest, "usn, dob, and course query parameters are required")
 		}
 
+		if services.IsTestStudent(usn) {
+			return c.JSON(services.GetTestCIEDetail(courseCode))
+		}
+
 		overview, err := services.GetDashboard(usn, dob, portal)
 		if err != nil {
 			return fiber.NewError(fiber.StatusUnauthorized, err.Error())
@@ -201,6 +209,10 @@ func buildApp() *fiber.App {
 
 		if usn == "" || dob == "" {
 			return fiber.NewError(fiber.StatusBadRequest, "usn and dob query parameters are required")
+		}
+
+		if services.IsTestStudent(usn) {
+			return c.JSON(services.GetTestExamHistory())
 		}
 
 		history, err := services.GetExamHistory(usn, dob, portal)

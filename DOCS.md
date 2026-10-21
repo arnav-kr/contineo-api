@@ -23,10 +23,12 @@ Requests authenticate using student credentials passed as query parameters:
 
 | Parameter | Type | Required | Description | Example |
 | :--- | :--- | :--- | :--- | :--- |
-| `usn` | string | Yes | Student University Seat Number | `1XX00XX000` |
-| `dob` | string | Yes | Date of birth (`YYYY-MM-DD`) | `2000-01-01` |
-| `course` | string | Endpoint-specific | Course code (returned in `/api/dashboard`) | `21CS51` |
+| `usn` | string | Yes | Student University Seat Number (`1NT24CS006` for mock test mode) | `1NT24CS006` |
+| `dob` | string | Yes | Date of birth (`YYYY-MM-DD` format; any value accepted for test USN) | `2000-01-01` |
+| `course` | string | Endpoint-specific | Course code (returned in `/api/dashboard`) | `21CS41` |
 | `portal` | string | No | Target portal: `even` (default) or `odd` (`parentsodd`). Auto-detects if omitted. | `odd` |
+
+> **Mock Test Student**: Use `usn=1NT24CS006` with any `dob` to test response schemas across all endpoints without real credentials. Demo courses: `21CS41`, `21CS42`, `21CS43`.
 
 Sessions are managed server-side.
 

@@ -66,12 +66,23 @@ func NormalizePortal(portal string) string {
 	return "even"
 }
 
-// GetBaseURL returns the Contineo portal base URL for the given portal type.
-func GetBaseURL(portal string) string {
-	if NormalizePortal(portal) == "odd" {
-		return "https://nmitparents.contineo.in/parentsodd"
+// GetBaseURL returns the Contineo portal base URL for the given portal type and optional host override.
+func GetBaseURL(portal string, hostOverride ...string) string {
+	host := DefaultBaseHost
+	if len(hostOverride) > 0 && hostOverride[0] != "" {
+		host = hostOverride[0]
 	}
-	return "https://nmitparents.contineo.in"
+	if strings.Contains(host, "://") {
+		u, err := url.Parse(host)
+		if err == nil && u.Host != "" {
+			host = u.Host
+		}
+	}
+	base := "https://" + host
+	if NormalizePortal(portal) == "odd" {
+		return base + "/parentsodd"
+	}
+	return base
 }
 
 // cookieRecord is the JSON-serialisable representation of a single cookie.
@@ -84,7 +95,7 @@ type cookieRecord struct {
 
 // loadJar restores cookies from Redis into a fresh jar.
 // Returns a new empty jar on any error (cache miss, Redis down, etc.).
-func loadJar(usn, dob, portal string) (http.CookieJar, error) {
+func loadJar(usn, dob, portal string, hostOverride ...string) (http.CookieJar, error) {
 	jar, err := cookiejar.New(nil)
 	if err != nil {
 		return nil, err
@@ -95,7 +106,8 @@ func loadJar(usn, dob, portal string) (http.CookieJar, error) {
 	}
 
 	norm := NormalizePortal(portal)
-	key := "cookies:" + norm + ":" + usn + ":" + dob
+	host := ResolveCollegeHost(usn, hostOverride...)
+	key := "cookies:" + host + ":" + norm + ":" + usn + ":" + dob
 	ctx := context.Background()
 
 	raw, err := rdb.Get(ctx, key).Bytes()
@@ -109,7 +121,7 @@ func loadJar(usn, dob, portal string) (http.CookieJar, error) {
 		return jar, nil
 	}
 
-	u, _ := url.Parse(GetBaseURL(norm))
+	u, _ := url.Parse(GetBaseURL(norm, host))
 	var cookies []*http.Cookie
 	for _, r := range records {
 		cookies = append(cookies, &http.Cookie{
@@ -125,13 +137,14 @@ func loadJar(usn, dob, portal string) (http.CookieJar, error) {
 }
 
 // saveJar persists cookies from the jar into Redis with a 10-minute TTL.
-func saveJar(usn, dob, portal string, jar http.CookieJar) {
+func saveJar(usn, dob, portal string, jar http.CookieJar, hostOverride ...string) {
 	if rdb == nil {
 		return
 	}
 
 	norm := NormalizePortal(portal)
-	u, _ := url.Parse(GetBaseURL(norm))
+	host := ResolveCollegeHost(usn, hostOverride...)
+	u, _ := url.Parse(GetBaseURL(norm, host))
 	cookies := jar.Cookies(u)
 
 	records := make([]cookieRecord, 0, len(cookies))
@@ -151,7 +164,7 @@ func saveJar(usn, dob, portal string, jar http.CookieJar) {
 	}
 
 	ctx := context.Background()
-	key := "cookies:" + norm + ":" + usn + ":" + dob
+	key := "cookies:" + host + ":" + norm + ":" + usn + ":" + dob
 	if err := rdb.Set(ctx, key, raw, 10*time.Minute).Err(); err != nil {
 		log.Printf("[cache] warning: failed to save cookies to Redis: %v", err)
 	}
@@ -191,7 +204,11 @@ func GetClientExported(usn, dob string, portal ...string) (*http.Client, error) 
 	if len(portal) > 0 {
 		p = portal[0]
 	}
-	jar, err := loadJar(usn, dob, p)
+	college := ""
+	if len(portal) > 1 {
+		college = portal[1]
+	}
+	jar, err := loadJar(usn, dob, p, college)
 	if err != nil {
 		return nil, err
 	}
@@ -209,9 +226,10 @@ func GetClientExported(usn, dob string, portal ...string) (*http.Client, error) 
 	return client, nil
 }
 
-func login(client *http.Client, usn, dob, portal string) (string, error) {
+func login(client *http.Client, usn, dob, portal string, college ...string) (string, error) {
 	norm := NormalizePortal(portal)
-	baseURL := GetBaseURL(norm)
+	host := ResolveCollegeHost(usn, college...)
+	baseURL := GetBaseURL(norm, host)
 
 	data := url.Values{}
 	data.Set("username", usn)
@@ -248,16 +266,21 @@ func login(client *http.Client, usn, dob, portal string) (string, error) {
 		return "", errors.New("invalid credentials or portal is down")
 	}
 
-	saveJar(usn, dob, norm, client.Jar)
+	saveJar(usn, dob, norm, client.Jar, host)
 	return html, nil
 }
 
 // GetDashboard retrieves student overview and courses.
 // If portal is omitted or empty, it automatically attempts primary portal and falls back to alternate portal.
+// Optional portal slice supports [portal, college].
 func GetDashboard(usn, dob string, portal ...string) (*models.Overview, error) {
 	requestedPortal := ""
 	if len(portal) > 0 {
 		requestedPortal = strings.TrimSpace(portal[0])
+	}
+	college := ""
+	if len(portal) > 1 {
+		college = strings.TrimSpace(portal[1])
 	}
 
 	if IsTestStudent(usn) {
@@ -266,7 +289,7 @@ func GetDashboard(usn, dob string, portal ...string) (*models.Overview, error) {
 
 	// Explicit portal request: target that portal directly
 	if requestedPortal == "odd" || requestedPortal == "parentsodd" || requestedPortal == "even" {
-		return getDashboardForPortal(usn, dob, requestedPortal)
+		return getDashboardForPortal(usn, dob, requestedPortal, college)
 	}
 
 	// Auto-detection mode: try primary portal first. If credentials fail, try alternate portal.
@@ -276,14 +299,14 @@ func GetDashboard(usn, dob string, portal ...string) (*models.Overview, error) {
 		alternate = "even"
 	}
 
-	overview, err := getDashboardForPortal(usn, dob, primary)
+	overview, err := getDashboardForPortal(usn, dob, primary, college)
 	if err == nil {
 		return overview, nil
 	}
 
 	// Try the alternate portal if the primary returned invalid credentials / down
 	if strings.Contains(err.Error(), "invalid credentials") || strings.Contains(err.Error(), "portal is down") {
-		altOverview, altErr := getDashboardForPortal(usn, dob, alternate)
+		altOverview, altErr := getDashboardForPortal(usn, dob, alternate, college)
 		if altErr == nil {
 			return altOverview, nil
 		}
@@ -292,21 +315,22 @@ func GetDashboard(usn, dob string, portal ...string) (*models.Overview, error) {
 	return nil, err
 }
 
-func getDashboardForPortal(usn, dob, portal string) (*models.Overview, error) {
+func getDashboardForPortal(usn, dob, portal string, college ...string) (*models.Overview, error) {
 	norm := NormalizePortal(portal)
-	cacheKey := "dashboard:" + norm + ":" + usn + ":" + dob
+	host := ResolveCollegeHost(usn, college...)
+	cacheKey := "dashboard:" + host + ":" + norm + ":" + usn + ":" + dob
 
 	var cached models.Overview
 	if cacheGet(cacheKey, &cached) {
 		return &cached, nil
 	}
 
-	client, err := GetClientExported(usn, dob, norm)
+	client, err := GetClientExported(usn, dob, norm, host)
 	if err != nil {
 		return nil, err
 	}
 
-	baseURL := GetBaseURL(norm)
+	baseURL := GetBaseURL(norm, host)
 	params := url.Values{}
 	params.Set("option", "com_studentdashboard")
 	params.Set("format", "html")
@@ -336,7 +360,7 @@ func getDashboardForPortal(usn, dob, portal string) (*models.Overview, error) {
 	html := string(bodyBytes)
 
 	if !strings.Contains(html, "cn-stu-data") {
-		html, err = login(client, usn, dob, norm)
+		html, err = login(client, usn, dob, norm, host)
 		if err != nil {
 			return nil, err
 		}
@@ -358,20 +382,25 @@ func GetAttendanceDetail(usn, dob string, detailUrl string, portal ...string) (*
 	if len(portal) > 0 {
 		p = portal[0]
 	}
+	college := ""
+	if len(portal) > 1 {
+		college = portal[1]
+	}
 	if strings.Contains(detailUrl, "parentsodd") {
 		p = "odd"
 	}
 	norm := NormalizePortal(p)
-	baseURL := GetBaseURL(norm)
+	host := ResolveCollegeHost(usn, college)
+	baseURL := GetBaseURL(norm, host)
 
-	cacheKey := "attendance:" + norm + ":" + usn + ":" + dob + ":" + detailUrl
+	cacheKey := "attendance:" + host + ":" + norm + ":" + usn + ":" + dob + ":" + detailUrl
 
 	var cached models.AttendanceData
 	if cacheGet(cacheKey, &cached) {
 		return &cached, nil
 	}
 
-	client, err := GetClientExported(usn, dob, norm)
+	client, err := GetClientExported(usn, dob, norm, host)
 	if err != nil {
 		return nil, err
 	}
@@ -409,8 +438,8 @@ func GetAttendanceDetail(usn, dob string, detailUrl string, portal ...string) (*
 	}
 	html := string(bodyBytes)
 
-	if !strings.Contains(res.Request.URL.Host, "nmitparents.contineo.in") || !strings.Contains(html, "uk-table") {
-		_, err = login(client, usn, dob, norm)
+	if !strings.Contains(html, "uk-table") {
+		_, err = login(client, usn, dob, norm, host)
 		if err != nil {
 			return nil, err
 		}
@@ -452,20 +481,25 @@ func GetCIEDetail(usn, dob string, detailUrl string, portal ...string) (*models.
 	if len(portal) > 0 {
 		p = portal[0]
 	}
+	college := ""
+	if len(portal) > 1 {
+		college = portal[1]
+	}
 	if strings.Contains(detailUrl, "parentsodd") {
 		p = "odd"
 	}
 	norm := NormalizePortal(p)
-	baseURL := GetBaseURL(norm)
+	host := ResolveCollegeHost(usn, college)
+	baseURL := GetBaseURL(norm, host)
 
-	cacheKey := "cie:" + norm + ":" + usn + ":" + dob + ":" + detailUrl
+	cacheKey := "cie:" + host + ":" + norm + ":" + usn + ":" + dob + ":" + detailUrl
 
 	var cached models.CIEData
 	if cacheGet(cacheKey, &cached) {
 		return &cached, nil
 	}
 
-	client, err := GetClientExported(usn, dob, norm)
+	client, err := GetClientExported(usn, dob, norm, host)
 	if err != nil {
 		return nil, err
 	}
@@ -503,8 +537,8 @@ func GetCIEDetail(usn, dob string, detailUrl string, portal ...string) (*models.
 	}
 	html := string(bodyBytes)
 
-	if !strings.Contains(res.Request.URL.Host, "nmitparents.contineo.in") || (!strings.Contains(html, "barPadding") && !strings.Contains(html, "CIE")) {
-		_, err = login(client, usn, dob, norm)
+	if !strings.Contains(html, "barPadding") && !strings.Contains(html, "CIE") {
+		_, err = login(client, usn, dob, norm, host)
 		if err != nil {
 			return nil, err
 		}
@@ -547,16 +581,22 @@ func GetExamHistory(usn, dob string, portal ...string) (*models.ExamHistory, err
 		return nil, err
 	}
 
+	college := ""
+	if len(portal) > 1 {
+		college = portal[1]
+	}
+
 	norm := NormalizePortal(overview.Portal)
-	baseURL := GetBaseURL(norm)
-	cacheKey := "exam-history:" + norm + ":" + usn + ":" + dob
+	host := ResolveCollegeHost(usn, college)
+	baseURL := GetBaseURL(norm, host)
+	cacheKey := "exam-history:" + host + ":" + norm + ":" + usn + ":" + dob
 
 	var cached models.ExamHistory
 	if cacheGet(cacheKey, &cached) {
 		return &cached, nil
 	}
 
-	client, err := GetClientExported(usn, dob, norm)
+	client, err := GetClientExported(usn, dob, norm, host)
 	if err != nil {
 		return nil, err
 	}
@@ -587,7 +627,7 @@ func GetExamHistory(usn, dob string, portal ...string) (*models.ExamHistory, err
 	html := string(bodyBytes)
 
 	if !strings.Contains(html, "Student's History") && !strings.Contains(html, "Student Name") {
-		_, err = login(client, usn, dob, norm)
+		_, err = login(client, usn, dob, norm, host)
 		if err != nil {
 			return nil, err
 		}

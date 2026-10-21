@@ -16,13 +16,15 @@ Base URL: `https://contineo-api.vercel.app`
 
 | Endpoint | Method | Parameters | Description |
 | :--- | :--- | :--- | :--- |
-| `/api/dashboard` | `GET` | `usn`, `dob`, `portal`? | Student details, registered courses, attendance overview |
-| `/api/attendance` | `GET` | `usn`, `dob`, `course`, `portal`? | Subject attendance log and stats |
-| `/api/cie` | `GET` | `usn`, `dob`, `course`, `portal`? | Internal assessment and quiz marks breakdown |
-| `/api/exam-history` | `GET` | `usn`, `dob`, `portal`? | Semester-by-semester grades, SGPA, credits, CGPA |
+| `/api/dashboard` | `GET` | `usn`, `dob`, `portal`?, `college`? | Student details, registered courses, attendance overview |
+| `/api/attendance` | `GET` | `usn`, `dob`, `course`, `portal`?, `college`? | Subject attendance log and stats |
+| `/api/cie` | `GET` | `usn`, `dob`, `course`, `portal`?, `college`? | Internal assessment and quiz marks breakdown |
+| `/api/exam-history` | `GET` | `usn`, `dob`, `portal`?, `college`? | Semester-by-semester grades, SGPA, credits, CGPA |
 | `/health` | `GET` | — | Health check |
 
-All requests take `usn` and `dob` (`YYYY-MM-DD`). The engine automatically checks both `even` and `odd` (`parentsodd`) portals with fallback if `portal` is not specified.
+All requests take `usn` and `dob` (`YYYY-MM-DD`).
+- **Portal**: Automatically checks both `even` and `odd` (`parentsodd`) portals with fallback.
+- **College**: Auto-detected from USN prefix (e.g. `1NT` -> NMIT, `4SO` -> SJEC, `WIT` -> WIT), or set explicitly via `college=sjec` / `college=wit` / custom domain. Can also set `CONTINEO_BASE_HOST` in environment.
 
 ---
 

@@ -41,6 +41,13 @@
         "required": false,
         "description": "Target portal: `even` or `odd` (`parentsodd`). If omitted, auto-resolves with fallback.",
         "schema": { "type": "string", "enum": ["even", "odd", "parentsodd"], "default": "even" }
+      },
+      "college": {
+        "name": "college",
+        "in": "query",
+        "required": false,
+        "description": "Optional college identifier (e.g. `nmit`, `sjec`, `wit`) or custom portal host. Auto-detected from USN prefix if omitted.",
+        "schema": { "type": "string", "example": "nmit" }
       }
     },
     "schemas": {
@@ -276,7 +283,8 @@
         "parameters": [
           { "$ref": "#/components/parameters/usn" },
           { "$ref": "#/components/parameters/dob" },
-          { "$ref": "#/components/parameters/portal" }
+          { "$ref": "#/components/parameters/portal" },
+          { "$ref": "#/components/parameters/college" }
         ],
         "responses": {
           "200": {
@@ -298,7 +306,8 @@
           { "$ref": "#/components/parameters/usn" },
           { "$ref": "#/components/parameters/dob" },
           { "$ref": "#/components/parameters/course" },
-          { "$ref": "#/components/parameters/portal" }
+          { "$ref": "#/components/parameters/portal" },
+          { "$ref": "#/components/parameters/college" }
         ],
         "responses": {
           "200": {
@@ -322,7 +331,8 @@
           { "$ref": "#/components/parameters/usn" },
           { "$ref": "#/components/parameters/dob" },
           { "$ref": "#/components/parameters/course" },
-          { "$ref": "#/components/parameters/portal" }
+          { "$ref": "#/components/parameters/portal" },
+          { "$ref": "#/components/parameters/college" }
         ],
         "responses": {
           "200": {
@@ -345,7 +355,8 @@
         "parameters": [
           { "$ref": "#/components/parameters/usn" },
           { "$ref": "#/components/parameters/dob" },
-          { "$ref": "#/components/parameters/portal" }
+          { "$ref": "#/components/parameters/portal" },
+          { "$ref": "#/components/parameters/college" }
         ],
         "responses": {
           "200": {

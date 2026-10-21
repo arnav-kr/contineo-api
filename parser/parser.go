@@ -61,7 +61,7 @@ func floatPtr(f float64) *float64 {
 }
 
 func ParseOverview(html string, base ...string) (*models.Overview, error) {
-	baseURL := "https://nmitparents.contineo.in"
+	baseURL := ""
 	if len(base) > 0 && base[0] != "" {
 		baseURL = strings.TrimRight(base[0], "/")
 	}

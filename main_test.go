@@ -100,6 +100,32 @@ func TestPortalHelpers(t *testing.T) {
 	}
 }
 
+func TestResolveCollegeHost(t *testing.T) {
+	tests := []struct {
+		name     string
+		usn      string
+		override string
+		expected string
+	}{
+		{"NMIT USN prefix 1NT", "1NT24CS006", "", "nmitparents.contineo.in"},
+		{"NMIT college code", "any", "nmit", "nmitparents.contineo.in"},
+		{"SJEC college code", "any", "sjec", "sjecparents.contineo.in"},
+		{"WIT college code", "any", "wit", "wit.contineo.in"},
+		{"Full host override", "any", "customparents.contineo.in", "customparents.contineo.in"},
+		{"Full URL override", "any", "https://portal.college.edu", "portal.college.edu"},
+		{"Fallback default", "XYZ123", "", "nmitparents.contineo.in"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := services.ResolveCollegeHost(tt.usn, tt.override)
+			if got != tt.expected {
+				t.Errorf("ResolveCollegeHost(%q, %q) = %q, want %q", tt.usn, tt.override, got, tt.expected)
+			}
+		})
+	}
+}
+
 func TestMockStudentEndpoints(t *testing.T) {
 	tests := []struct {
 		name           string

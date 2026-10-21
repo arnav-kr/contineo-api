@@ -63,8 +63,9 @@ curl "https://contineo-api.vercel.app/api/exam-history?usn=1NT24CS006&dob=2000-0
 - **Skills**: Create a `/contineo` skill using the schema and workflow from [agent.md](agent.md).
 - **Gems**: Paste the endpoint reference and mock USN (`1NT24CS006`) into the Gem instructions.
 
-### Claude (Projects)
-Add [agent.md](agent.md) or [llms.txt](llms.txt) to **Project Knowledge**.
+### Claude (Skills & Projects)
+- **Claude Skills**: In Claude.ai, go to **Settings** -> **Capabilities** -> **Skills** (or **Customize** -> **Skills**) and upload the `.agents/skills/contineo-api-client` folder (or zip). This also syncs with Claude Code CLI (`/skills`).
+- **Claude Projects**: Alternatively, attach [agent.md](agent.md) or [llms.txt](llms.txt) to **Project Knowledge**.
 
 ### Coding Agents (Cursor / Windsurf / Antigravity)
 The repository includes an agent skill manifest in `.agents/skills/contineo-api-client/SKILL.md`. In Cursor/Windsurf, reference `@.agents/skills/contineo-api-client/SKILL.md`.

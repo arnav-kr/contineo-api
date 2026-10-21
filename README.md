@@ -92,4 +92,4 @@ Runs on `http://localhost:3000`.
 
 ## License
 
-MIT
+[AGPL-3.0](LICENSE)

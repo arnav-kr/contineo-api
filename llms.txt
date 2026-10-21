@@ -1,23 +1,33 @@
-Contineo API Spec (llms.txt)
+# Contineo API LLM Quick Reference (llms.txt)
 
-Base URL: /api
-Auth: Query parameters (`usn`, `dob`, optional `course`, optional `portal`)
-Format: JSON responses, error format `{"error": "message"}`
-Date Format: `YYYY-MM-DD`
+> Unofficial REST API for Contineo parent/student portals. Retrieves real-time student profile, course enrollments, attendance records, CIE internal assessment marks, and exam history.
 
-Endpoints:
-- GET /health
-  Status: 200 OK
-  Response: {"status": "ok", "time": "<ISO8601>"}
+## Base Paths
+- API Base: `/api`
+- OpenAPI Spec: `/openapi.json`
+- Interactive Docs: `/docs`
+- Health Checks: `/health`, `/api/health`
 
-- GET /api/dashboard?usn={usn}&dob={dob}&portal={even|odd}
-  Returns: Student profile, courses list, attendance summary, active portal.
+## Core Authentication & Parameters
+Requests use URL query parameters:
+- `usn` (string, required): Student University Seat Number (e.g. `1XX00XX000`)
+- `dob` (string, required): Date of birth in `YYYY-MM-DD` format (e.g. `2000-01-01`)
+- `portal` (string, optional): Portal variant: `even` (default) or `odd` (`parentsodd`). Auto-detected with fallback when omitted.
+- `course` (string, required for course-specific endpoints): Course code from `/api/dashboard` (e.g. `21CS51`)
 
-- GET /api/attendance?usn={usn}&dob={dob}&course={courseCode}&portal={even|odd}
-  Returns: Course attendance statistics and class log records.
+## Endpoint Summary
+1. `GET /api/dashboard?usn={usn}&dob={dob}&portal={even|odd}`
+   - Overview: student profile, registered courses, attendance percentages, CIE totals, below-threshold warnings (75%, 85%), active `portal`.
+2. `GET /api/attendance?usn={usn}&dob={dob}&course={courseCode}&portal={even|odd}`
+   - Course attendance: overall metrics (`totalClasses`, `present`, `absent`, `percentage`) and class records array (`date`, `startTime`, `endTime`, `isPresent`, `status`).
+3. `GET /api/cie?usn={usn}&dob={dob}&course={courseCode}&portal={even|odd}`
+   - CIE evaluation: components array (test names, obtained/max marks, raw string) and `finalCIE` object with course attendance percentage.
+4. `GET /api/exam-history?usn={usn}&dob={dob}&portal={even|odd}`
+   - Exam results: `student` object, `degreeStats` (credits required/earned/to-earn, CGPA), and semester list (`semesterName`, `creditsRegistered`, `creditsEarned`, `sgpa`, `cgpa`, `courses` with code, name, credits, GPA, grade).
 
-- GET /api/cie?usn={usn}&dob={dob}&course={courseCode}&portal={even|odd}
-  Returns: Internal assessments, component marks, final CIE score.
-
-- GET /api/exam-history?usn={usn}&dob={dob}&portal={even|odd}
-  Returns: Semester-wise results, grades, SGPA, credits, CGPA.
+## Error Standard
+- Format: `{"error": "message"}`
+- 400 Bad Request: Missing required parameters
+- 401 Unauthorized: Invalid credentials or portal down
+- 404 Not Found: Course code or detail link not found
+- 500 Internal Server Error: Portal scraping or network failure
